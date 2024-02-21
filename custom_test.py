@@ -36,7 +36,7 @@ def check_information(contexts, query, model):
     most_similar_index = np.argmax(similarities)
 
     # If the highest similarity score is above the threshold, return True
-    if similarities[most_similar_index] > 0.3:
+    if similarities[most_similar_index] > 0.5:
         return True
     else:
         return False
