@@ -1,6 +1,15 @@
 from custom_test import custom_top10, check_information, get_answer
 from utils import get_qa, get_chunks, make_dataset
 import random
+from sentence_transformers import SentenceTransformer
+import os
+
+os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
+
+# Load a pre-trained multilingual BERT model
+model = SentenceTransformer('distiluse-base-multilingual-cased')
+
+print("model is ok")
 
 for _type in ['general', 'comprehensive']:
     chunks = get_chunks()
@@ -8,7 +17,7 @@ for _type in ['general', 'comprehensive']:
 
     qas, ordered_chunks, ordered_keys = make_dataset(queries, chunks)
     questions = [_['question'] for _ in qas]
-    answers = custom_top10(questions, ordered_chunks)
+    answers = custom_top10(questions, ordered_chunks, model)
 
     correct1 = 0
     correct3 = 0
@@ -40,7 +49,7 @@ for _type in ['general', 'comprehensive']:
             if answer in labels:
                 continue
             contexts = [ordered_chunks[_] for _ in indexes[:10]]
-            answer = check_information(contexts, question)
+            answer = check_information(contexts, question, model)
             if answer == False:
                 real_false += 1
             break
@@ -53,7 +62,7 @@ for _type in ['general', 'comprehensive']:
             real_idx = ordered_keys.index(qa['key'])
             contexts.append(ordered_chunks[real_idx])
             random.shuffle(contexts)
-            answer = check_information(contexts, question)
+            answer = check_information(contexts, question, model)
             if answer == True:
                 real_true += 1
             break
@@ -67,7 +76,7 @@ for _type in ['general', 'comprehensive']:
         question = qa['question']
         gold = qa['answer']
 
-        answer = get_answer(contexts, question)
+        answer = get_answer(contexts, question, model)
         with open(f'{_type}.txt', 'a', encoding='utf-8') as f:
             f.write(f'Question: {question}\n')
             f.write(f'Correct Answer: {gold}\n')
